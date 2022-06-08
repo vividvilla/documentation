@@ -1,0 +1,55 @@
+---
+title: Pomerium Logs
+sidebar_label: Logs
+---
+
+Pomerium generates numerous and verbose logs. These logs can be useful in debugging new configurations, if you know what to look for. This page explains how to differentiate logs for different Pomerium [components](docs/overview/architecture#component-level), and how to read those logs.
+
+## Log Format
+
+Each log entry is JSON-formatted. Log entries for individual components are identifiable with the `service` key. Tools like <https://jsonformatter.org/> in the browser or [jq](https://stedolan.github.io/jq/) on the command line can format the output to a more human-readable form. 
+
+## Authorize Logs
+
+Consider the log entry below:
+
+```json
+{
+  "level": "info",
+  "service": "authorize",
+  "request-id": "46747f58...",
+  "check-request-id": "7700fe70...",
+  "method": "GET",
+  "path": "/",
+  "host": "service.example.com,",
+  "query": "",
+  "session-id": "46b36e11...",
+  "allow": false,
+  "allow-why-false": ["claim-unauthorized", "non-pomerium-route"],
+  "deny": false,
+  "deny-why-false": ["valid-client-certificate-or-none-required"],
+  "user": "941b0719...",
+  "email": "alex@example.com",
+  "databroker_server_version": 14525441301982542168,
+  "databroker_record_version": 1705,
+  "time": "2022-05-16T18:18:55Z",
+  "message": "authorize check"
+}
+```
+
+Let's break down the various messages in this entry:
+
+- `allow-why-false`, `allow-why-true`: The short reason strings why access was allowed (or not allowed). Possible values for `allow-why-false` include:
+  - `claim-unauthorized`: This means there is a policy rule on a claim that didn't pass.
+
+  - `non-pomerium-route`: means that it was not a `/.pomerium/...` route.
+
+- `allow`: if true it means that at least one `allow` rule passed, and as long as `deny` is false, the request will be allowed
+
+- `databroker_server_version` and `databroker_record_version` are used for auditing. With these version numbers and a complete history of all changes in the databroker you should be able to determine what data was used for policy evaluation
+
+- `deny-why-false`, `deny-why-true`:The short reason strings why access was denied (or not denied). In this case `valid-client-certificate-or-none-required` means that either a valid client certificate was provided, or the policy didn't require one. By default pomerium policies have this PPL rule added to them. It's how we implement client certificates.
+
+- `deny`: if true it means that at least one `deny` rule passed, and the request will be denied.
+
+- `request-id`: An id generated for every request that can be used to correlate logs.
