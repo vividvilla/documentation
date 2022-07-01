@@ -42,7 +42,7 @@ const config = {
         },
         sitemap: {
           filename: 'docs/sitemap.xml',
-          ignorePatterns: ['/docs/examples/**']
+          ignorePatterns: ['/docs/examples/**','/examples/**']
         },
       },
     ],
